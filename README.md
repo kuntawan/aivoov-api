@@ -13,13 +13,6 @@ Take a look at the [Voice List page](https://aivoov.com/voices) to see a list of
 **Note:** You need to have a AiVOOV account with Characters Credit to be able to access the API.
 
 ## Overview of API
-
-There are two endpoints on the API that you will use to convert text to speech:
-1. `/transcribe`: Performs the text-to-speech conversion.
-2. `/voices`: List of all voice provided by aivoov.com.
-
-The two endpoints have been described in detail below.
-
 But first, we need authentication!
 
 ## Authentication
@@ -31,170 +24,189 @@ To access your credentials, make sure you're logged-in to your aivoov.com accoun
  
 ## Endpoints
 
-- Base URL: `https://aivoov.com/api/v1/`
+- Base URL: `https://aivoov.com/api/v8/`
 
 **Notes:**
 - All endpoints are relative to the base URL.
 - Requests should always be in form-data format, with a `Content-Type: multipart/form-data` header.
 
-### Convert
+# Aivoov API Documentation
 
-- Endpoint:  `./transcribe`
+## Overview
 
-Use this endpoint to start converting an article from text to audio.
+This document describes how to interact with the Aivoov API to:
+- Retrieve available voice IDs
+- Generate audio using multiple voice IDs and text inputs
 
-- Method: `POST`
+---
 
-- Body (form-data):
-  ```jsonc
-  {
-    "voice_id": string,
-    "transcribe_text": string[],  
-    "engine": string,
-    "title": string, // Optional         
-    "transcribe_ssml_style": string[], // Optional         
-    "transcribe_ssml_spk_rate": string[],    // Optional      
-    "transcribe_ssml_volume": string[], // Optional
-    "transcribe_ssml_pitch_rate": string[],   // Optional
-  }
-  ```
+## 🔐 Authentication
 
-  `voice_id` is the ID of the voice used to synthesize the text. Refer to the [Voice List page](https://aivoov.com/voices) for more details.
-   
-  `transcribe_text[]` is an array of strings, where each string represents a paragraph in plain text format OR valid SSML format.
-  
-  `engine` Select the preferences of the engine from the Voice Response. There are three type of engine supported  `neural2`, `neural` and `standard` 
-  
-  `transcribe_ssml_style` is a string representing the tone and accent of the voice to read the text. Make sure the value for `transcribe_ssml_style` is supported by the voice in your request. You will get the `style_list` form the `voices` api response. 
+All requests must include your API key in the `X-API-KEY` header.
 
-  `transcribe_ssml_spk_rate` is a string in the format `<number>%`, where `<number>` is in the closed interval of `[20, 200]`. Use this to speed-up, or slow-down the speaking rate of the speech. 
-   
-  `transcribe_ssml_volume` is a string in the format `<number>dB`, where `<number>` is in the closed interval of `[-40, 40]`. Use this to high or low the speaking volume of the speech. 
-  
-  `transcribe_ssml_pitch_rate` is a string in the format `<number>%`, where `<number>` is in the closed interval of `[-50, 50]`. Use this to pitch-low, or pitch-low thespeaking  pitch of the speech. 
-   
+---
 
-- Response (JSON):
-  ```jsonc
-  {
-    "status": "true" | "false",
-    "message": string,
-    "transcribe_data": string
-  }
-  ```
-`You get a transcribe_data parameter with  base64encode content.
-Simply you need to use base64decode to retrieve your content and write your file in file-name.mp3 format.`
+## 🎤 Get All Voice IDs
 
-### Voices List
+Use the following endpoint to retrieve the list of available voice IDs.
 
-- Endpoint:  `./voices?provider=:provider`
+### Request
 
-Use this endpoint to retrieve all voice provided by aivoov.com.
-- Parameter: provider
-- Value: `google`,`azure`,`ibm`,`aws`
-- Method: `GET`
-  
-- Response (JSON):
-  ```jsonc
-  {
-	"status": true,
-	"message": "Voice found",
-	"data": [
-			{
-				"name": "Adri",
-				"gender": "Female",
-				"language_name": "Afrikaans (South Africa)",
-				"language_code": "af-ZA",
-				"voice_id": "af-ZA-AdriNeural",
-				"engine": "neural",
-				"provider": "azure",
-				"style_list": null,
-				"is_new": "0"
-			},
-			{
-				"name": "Willem",
-				"gender": "Male",
-				"language_name": "Afrikaans (South Africa)",
-				"language_code": "af-ZA",
-				"voice_id": "af-ZA-WillemNeural",
-				"engine": "neural",
-				"provider": "azure",
-				"style_list": null,
-				"is_new": "0"
-			}
-			...
-		]
-  }
-  ```
+```bash
+curl -i -X GET \
+   -H "X-API-KEY:YOUR-API-KEY" \
+   'https://aivoov.com/api/v8/voices'
+```
+
 **Note:**  This endpoint api daily call limit is 20. So you can store the all voices in your database and use as your requirement.
 
+### Response Example
+
+```json
+[
+  {
+    "voice_id": "a9c6e858-cbcb-4380-91e5-21cea93be41f",
+    "name": "English Male 1",
+    "language": "en-US"
+  },
+  ...
+]
+```
+
+---
+
+## 🔊 Create Audio with Multiple Voice and Text Inputs
+
+Use this endpoint to generate audio using multiple `voice_id` and `transcribe_text` pairs, with optional SSML pitch and speaking rate adjustments.
+
+### Request
+
+```bash
+curl -i -X POST \
+   -H "Content-Type:application/x-www-form-urlencoded" \
+   -H "X-API-KEY:YOUR-API-KEY" \
+   -d "voice_id[]=a9c6e858-cbcb-4380-91e5-21cea93be41f" \
+   -d "transcribe_text[]=hello world" \
+   -d "transcribe_ssml_pitch_rate[]=-50" \
+   -d "transcribe_ssml_spk_rate[]=1" \
+   -d "voice_id[]=a9c6e858-cbcb-4380-91e5-21cea93be41f" \
+   -d "transcribe_text[]=how are you" \
+   -d "transcribe_ssml_pitch_rate[]=10" \
+   -d "transcribe_ssml_spk_rate[]=-10" \
+   'https://aivoov.com/api/v8/create'
+```
+
+### Parameters
+
+| Parameter                    | Type     | Description                                                                                                                                                     |
+|-----------------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `voice_id[]`                | string[] | Voice ID for each text input                                                                                                                                     |
+| `transcribe_text[]`         | string[] | Text to be synthesized                                                                                                                                           |
+| `transcribe_ssml_pitch_rate[]` | int[]    | Pitch adjustment (optional, pass `default` for default rate),`<number>` is in the closed interval of `[-50, 50]`. Use this to pitch-low, or pitch-low thespeaking  pitch of the speech.        |
+| `transcribe_ssml_spk_rate[]`   | int[]    | Speaking rate adjustment (optional, pass `default` for default rate) `<number>` is in the closed interval of `[20, 200]`. Use this to speed-up, or slow-down the speaking rate of the speech.  |
+| `transcribe_ssml_volume[]`   | int[]    | Speaking volume adjustment (optional, pass `default` for default volume)   `<number>` is in the closed interval of `[-40, 40]`. Use this to high or low the speaking volume of the speech. |
+
+> Note: All array parameters should be in the same order to match voice and text pairs.
+
+### Response Example
+
+```json
+{
+  "status": true,
+  "message": "Audio successfully generated",
+  "audio": "Base64 encoded audio"
+}
+```
+
+---
 ## Rate Limits
 
 We limit the rate of our APIs to prevent abuse. The specific limits are based on the API you are using.
 
 **Summary of the limits**
 
-Endpoint `v1/transcribe` Max Requests per Minute (RPM) `75`
+Endpoint `v8/create` Max Requests per Minute (RPM) `75`
 All GET endpoints `100`
 
  ## Example
  
 ### jQuery 
-	const formData = new FormData()
-	formData.append('voice_id', 'pl-PL-{{engine}}-D')
-	formData.append('transcribe_text[]', 'Opowiem Ci historię')
-	formData.append('engine', 'neural')
+      var settings = {
+      "url": "https://aivoov.com/api/v8/create",
+      "method": "POST",
+      "timeout": 0,
+      "headers": {
+        "X-API-KEY": "YOUR-API-KEY",
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "data": {
+        "voice_id[]": "a9c6e858-cbcb-4380-91e5-21cea93be41f",
+        "transcribe_text[]": "hello world",
+        "transcribe_ssml_pitch_rate[]": "default",
+        "transcribe_ssml_spk_rate[]": "default",
+        "transcribe_ssml_pitch_rate[]": "default"
+      }
+    };
 
-	const options = {
-	method: "POST",
-	headers: { 
-		"X-API-KEY": YOUR API KEY,
-	},
-	body: formData,
-	};
-	const response =   fetch("https://aivoov.com/api/v1/transcribe",options).then((res) => res.json());
-	console.log({ response });
+    $.ajax(settings).done(function (response) {
+      console.log(response);
+    });
 	 
  ### NodeJs
  
-		
-	var request = require('request');
-	var options = {
-	  'method': 'POST',
-	  'url': 'https://aivoov.com/api/v1/transcribe',
-	  'headers': {
-	    'X-API-KEY': 'YOUR API KEY',
-	  },
-	  formData: {
-	    'voice_id': 'pl-PL-{{engine}}-D',
-	    'transcribe_text[]': 'Opowiem Ci historię',
-	    'engine': 'neural'
-	  }
-	};
-	request(options, function (error, response) {
-	  if (error) throw new Error(error);
-	  console.log(response.body);
-	});
+      var request = require('request');
+      var options = {
+        'method': 'POST',
+        'url': 'https://aivoov.com/api/v8/create',
+        'headers': {
+          'X-API-KEY': 'YOUR-API-KEY',
+          'Content-Type': 'application/x-www-form-urlencoded',==
+        },
+        form: {
+          'voice_id[]': 'a9c6e858-cbcb-4380-91e5-21cea93be41f',
+          'transcribe_text[]': 'hello world',
+          'transcribe_ssml_pitch_rate[]': 'default',
+          'transcribe_ssml_spk_rate[]': 'default',
+          'transcribe_ssml_pitch_rate[]': 'default'
+        }
+      };
+      request(options, function (error, response) {
+        if (error) throw new Error(error);
+        console.log(response.body);
+      });
+
 	
 ### PHP cURL
 
-	
-	$data['transcribe_text[]'] = "Opowiem Ci historię."; 
-	$data['voice_id'] = "pl-PL-{{engine}}-D"; 
-	$data['engine'] = "neural";  
+      <?php
 
-	$ch = curl_init(); 
-	curl_setopt($ch, CURLOPT_URL,'https://aivoov.com/api/v1/transcribe');
-	curl_setopt($ch, CURLOPT_POST, 1);
-	curl_setopt($ch, CURLOPT_POSTFIELDS,$data);  //Post Fields
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	$headers = [  
-		'X-API-KEY: YOUR API KEY',
-		'Content-Type: multipart/form-data'
-	];
-	curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-	$server_output = curl_exec ($ch);
-	curl_close ($ch);
-	$server_output = json_decode($server_output);   
-	
-	
+      $data['voice_id[]'] = "a9c6e858-cbcb-4380-91e5-21cea93be41f"; 
+      $data['transcribe_text[]'] = "Hello world."; 
+      $data['transcribe_ssml_pitch_rate[]'] = "default"; 
+      $data['transcribe_ssml_spk_rate[]'] = "default";  
+      $data['transcribe_ssml_pitch_rate[]'] = "default";  
+
+
+      $curl = curl_init();
+
+      curl_setopt_array($curl, array(
+        CURLOPT_URL => 'https://aivoov.com/api/v8/create',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS =>$data,
+        CURLOPT_HTTPHEADER => array(
+          'X-API-KEY: YOUR-API-KEY',
+          'Content-Type: application/x-www-form-urlencoded'
+        ),
+      ));
+
+      $response = curl_exec($curl);
+
+      curl_close($curl);
+      echo $response;
+
