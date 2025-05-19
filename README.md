@@ -32,6 +32,9 @@ To access your credentials, make sure you're logged-in to your aivoov.com accoun
 
 # Aivoov API Documentation
 
+## Check postman collection
+https://documenter.getpostman.com/view/5434397/2sB2qXki3a
+
 ## Overview
 
 This document describes how to interact with the Aivoov API to:
