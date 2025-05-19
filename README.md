@@ -52,8 +52,9 @@ All requests must include your API key in the `X-API-KEY` header.
 ## 🎤 Get All Voice IDs
 
 Use the following endpoint to retrieve the list of available voice IDs.
-You can also use language_code in query string to filter your voice uing the language.
-`https://aivoov.com/api/v8/voices?language_code=en-US` Form this ypu will get on US engilsh voice.
+You can also use the language_code parameter in the query string to filter voices by language.
+For example:
+https://aivoov.com/api/v8/voices?language_code=en-US
 
 Retrieve all language names from this file.
 https://github.com/AiVOOV/aivoov-api/blob/main/Languages.md
