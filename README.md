@@ -115,7 +115,7 @@ curl -i -X POST \
 | `transcribe_ssml_spk_rate[]`   | int[]    | Speaking rate adjustment (optional, pass `default` for default rate) `<number>` is in the closed interval of `[20, 200]`. Use this to speed-up, or slow-down the speaking rate of the speech.  |
 | `transcribe_ssml_volume[]`   | int[]    | Speaking volume adjustment (optional, pass `default` for default volume)   `<number>` is in the closed interval of `[-40, 40]`. Use this to high or low the speaking volume of the speech. |
 
-> Note: All array parameters should be in the same order to match voice and text pairs.
+> Note: All array parameters should be in the same order to match voice and text pairs. The response audio is in Base64-encoded format and can be decoded using any Base64 decoding method.
 
 ### Response Example
 
@@ -219,3 +219,37 @@ All GET endpoints `100`
       curl_close($curl);
       echo $response;
 
+	
+### Python
+
+	Code useing http client
+	-----------------------	
+	import http.client
+	
+	conn = http.client.HTTPSConnection("aivoov.com")
+	payload = 'voice_id%5B%5D=cffc1d81-07cc-494f-a03a-0c0eebe99c8c&transcribe_text%5B%5D=hello%20world&transcribe_ssml_pitch_rate%5B%5D=default&transcribe_ssml_spk_rate%5B%5D=default&transcribe_ssml_pitch_rate%5B%5D=default'
+	headers = {
+	  'X-API-KEY': 'YOUR-API-KEY',
+	  'Content-Type': 'application/x-www-form-urlencoded'
+	}
+	conn.request("POST", "/api/v8/create", payload, headers)
+	res = conn.getresponse()
+	data = res.read()
+	print(data.decode("utf-8"))
+	
+	
+	Code useing python requests
+	---------------------------
+	import requests
+	
+	url = "https://aivoov.com/api/v8/create"
+	
+	payload = 'voice_id%5B%5D=cffc1d81-07cc-494f-a03a-0c0eebe99c8c&transcribe_text%5B%5D=hello%20world&transcribe_ssml_pitch_rate%5B%5D=default&transcribe_ssml_spk_rate%5B%5D=default&transcribe_ssml_pitch_rate%5B%5D=default'
+	headers = {
+	  'X-API-KEY': 'YOUR-API-KEY',
+	  'Content-Type': 'application/x-www-form-urlencoded'
+	}
+	
+	response = requests.request("POST", url, headers=headers, data=payload)
+	
+	print(response.text)
